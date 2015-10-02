@@ -19,12 +19,10 @@ except poplib.error_proto:
 
 nbmessages = len(mailbox.list()[1])
 
-for i in range(nbmessages):
+for i in range(nbmessages):  
+  expcnt = 0  
+  for msg in mailbox.retr(i+1)[1]:    
   
-  expcnt = 0
-  
-  for msg in mailbox.retr(i+1)[1]:
-    
     for line in msg.split('\n'):
       
       if re.search("^From:[^<]{1,}<([^>]{1,})>", line):
@@ -50,10 +48,6 @@ for i in range(nbmessages):
         if auth and expcnt == 1:
           subprocess.call(["./delete.sh", url, alerteid, exp.split('@')[0]], shell=False)
       
-  #mailbox.dele(i+1)
-  print 'delete msg %d' % (i+1)
-
-status = mailbox.stat()
-print "Mailbox has %d messages for a total of %d bytes" % (status[0], status[1])
+  mailbox.dele(i+1)
 
 mailbox.quit()
