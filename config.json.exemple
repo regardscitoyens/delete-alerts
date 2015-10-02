@@ -1,7 +1,7 @@
 {
   "user": "yourbot@yourdomain.tld",
   "password": "********",
-  "host": "yourdomain.tld",
+  "host": "pop.yourdomain.tld",
   "authorized_senders" : [
     "you@yourdomain.tld",
     "dude@yourdomain.tld"
