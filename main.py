@@ -1,8 +1,10 @@
 #! /usr/bin/env python
 # -*- coding: utf8 -*-
-import sys, re, json, getpass, poplib, subprocess
+import sys, os, re, json, getpass, poplib, subprocess
 
-with open('config.json') as conf_file:    
+dirpath = os.path.dirname(os.path.abspath(__file__))
+
+with open(os.path.join(dirpath, 'config.json')) as conf_file:    
   conf = json.load(conf_file)
 
 mailbox = poplib.POP3(conf['host'].encode('utf-8'))
@@ -46,7 +48,7 @@ for i in range(nbmessages):
         alerteid = m.group(1)
         
         if auth and expcnt == 1:
-          subprocess.call(["./delete.sh", url, alerteid, exp.split('@')[0]], shell=False)
+          subprocess.call([os.path.join(dirpath, 'delete.sh'), url, alerteid, exp.split('@')[0]], shell=False)
       
   mailbox.dele(i+1)
 
