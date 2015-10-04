@@ -20,6 +20,7 @@ except poplib.error_proto:
     sys.exit(1)
 
 nbmessages = len(mailbox.list()[1])
+nbtodel = 0
 
 for i in range(nbmessages):  
   expcnt = 0  
@@ -49,7 +50,12 @@ for i in range(nbmessages):
         
         if auth and expcnt == 1:
           subprocess.call([os.path.join(dirpath, 'delete.sh'), url, alerteid, exp.split('@')[0]], shell=False)
+          nbtodel += 1
       
   mailbox.dele(i+1)
+
+if nbtodel >= 1:
+  print "# To delete more alerts, just send me the undelivered email message (or its \"eml\" attachment if it has one) at \"%s\"." % conf['user'].encode('utf-8')
+  print "# I'm running once a day, no matter anyone already sended me the same message."
 
 mailbox.quit()
