@@ -23,39 +23,53 @@ nbmessages = len(mailbox.list()[1])
 nbtodel = 0
 
 for i in range(nbmessages):  
-  expcnt = 0  
-  for msg in mailbox.retr(i+1)[1]:    
+  expcnt = 0
+  dest = 'Utilisateur indéterminé'
+  keywords = 'Alerte indéterminée'
+  data = mailbox.retr(i+1)[1]
+  datastr = re.sub('> ', '', ' '.join(data))
   
-    for line in msg.split('\n'):
+  if re.search('alertes de votre abonnement', datastr):
+    k = re.search('alertes de votre abonnement \: ([^-]{1,})-', datastr)
+    keywords = k.group(1)
+  
+  for line in data: 
       
-      if re.search("^From:[^<]{1,}<([^>]{1,})>", line):
-        exp = re.sub(r'^From:[^<]{1,}<([^>]{1,})>', r'\1', line)
-        expcnt += 1
-        
-        # expéditeur autorisé :
-        if exp in conf['authorized_senders']:
-          auth = True
-        else:
-          auth = False
+    if re.search("^From:[^<]{1,}<([^>]{1,})>", line):
+      exp = re.sub(r'^From:[^<]{1,}<([^>]{1,})>', r'\1', line)
+      expcnt += 1
       
-      if re.search("nosdeputes", line):
-        url = 'http://www.nosdeputes.fr/alerte/delete/'
-        
-      if re.search("nossenateurs", line):
-        url = 'http://www.nossenateurs.fr/alerte/delete/'
+      # expéditeur autorisé :
+      if unicode(exp) in conf['authorized_senders']:
+        auth = True
+      else:
+        auth = False
+    
+    if re.search("nosdeputes", line):
+      url = 'http://www.nosdeputes.fr/alerte/delete/'
       
-      if re.search("edit/(.{32})$", line):
-        m = re.search("edit/(.{32})$", line)
-        alerteid = m.group(1)
-        
-        if auth and expcnt == 1:
-          subprocess.call([os.path.join(dirpath, 'delete.sh'), url, alerteid, exp.split('@')[0]], shell=False)
-          nbtodel += 1
+    if re.search("nossenateurs", line):
+      url = 'http://www.nossenateurs.fr/alerte/delete/'
+    
+    if re.search("^> To: ", line):
+      d = re.search("^> To: (.{1,})", line)
+      dest = d.group(1)
+    
+    if re.search("(edit|delete)/(.{32})$", line):
+      m = re.search("(edit|delete)/(.{32})$", line)
+      alerteid = m.group(2)
+      
+      if auth and expcnt == 1:
+        subprocess.call([os.path.join(dirpath, 'delete.sh'), keywords, url, alerteid, dest, exp.split('@')[0].title()], shell=False)
+        nbtodel += 1
+        break
+      else:
+        print "Message de %s supprimé sans traitement (expéditeur non autorisé)" % exp
       
   mailbox.dele(i+1)
 
 if nbtodel >= 1:
-  print "# To delete more alerts, just send me the undelivered email message (or its \"eml\" attachment if it has one) at \"%s\"." % conf['user'].encode('utf-8')
-  print "# I'm running once a day, no matter anyone already sended me the same message."
+  print "# Pour supprimer d'autres alertes, envoyez moi l'email \"undelivered\" "
+  print "# (ou sa pièce jointe .eml s'il en comporte une) à %s" % conf['user'].encode('utf-8')
 
 mailbox.quit()
