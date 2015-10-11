@@ -22,8 +22,8 @@ except poplib.error_proto:
 nbmessages = len(mailbox.list()[1])
 nbtodel = 0
 
-for i in range(nbmessages):  
-  expcnt = 0
+for i in range(nbmessages): 
+  exp = []
   dest = 'Utilisateur indéterminé'
   keywords = 'Alerte indéterminée'
   data = mailbox.retr(i+1)[1]
@@ -36,11 +36,10 @@ for i in range(nbmessages):
   for line in data: 
       
     if re.search("^From:[^<]{1,}<([^>]{1,})>", line):
-      exp = re.sub(r'^From:[^<]{1,}<([^>]{1,})>', r'\1', line)
-      expcnt += 1
+      exp.append(re.sub(r'^From:[^<]{1,}<([^>]{1,})>', r'\1', line))
       
       # expéditeur autorisé :
-      if unicode(exp) in conf['authorized_senders']:
+      if unicode(exp[0]) in conf['authorized_senders']:
         auth = True
       else:
         auth = False
@@ -59,17 +58,17 @@ for i in range(nbmessages):
       m = re.search("(edit|delete)/(.{32})$", line)
       alerteid = m.group(2)
       
-      if auth and expcnt == 1:
-        subprocess.call([os.path.join(dirpath, 'delete.sh'), keywords, url, alerteid, dest, exp.split('@')[0].title()], shell=False)
+      if auth:
+        subprocess.call([os.path.join(dirpath, 'delete.sh'), keywords, url, alerteid, dest, exp[0].split('@')[0].title()], shell=False)
         nbtodel += 1
         break
       else:
-        print "Message de %s supprimé sans traitement (expéditeur non autorisé)" % exp
+        print "Message de %s supprimé sans traitement (expéditeur non autorisé ou message \"bouncé\")" % exp
       
   mailbox.dele(i+1)
 
 if nbtodel >= 1:
   print "# Pour supprimer d'autres alertes, envoyez moi l'email \"undelivered\" "
-  print "# (ou sa pièce jointe .eml s'il en comporte une) à %s" % conf['user'].encode('utf-8')
+  print "# (ou sa pièce jointe .eml s'il en comporte une) à %s (en réponse ou en fwd)" % conf['user'].encode('utf-8')
 
 mailbox.quit()
