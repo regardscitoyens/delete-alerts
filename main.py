@@ -29,8 +29,8 @@ for i in range(nbmessages):
   data = mailbox.retr(i+1)[1]
   datastr = re.sub('> ', '', ' '.join(data))
   
-  if re.search('alertes de votre abonnement', datastr):
-    k = re.search('alertes de votre abonnement \: ([^-]{1,})-', datastr)
+  if re.search('de votre abonnement', datastr):
+    k = re.search('de votre abonnement \: ([^-]{1,})-', datastr)
     keywords = k.group(1)
   
   for line in data: 
